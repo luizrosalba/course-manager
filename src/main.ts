@@ -8,5 +8,6 @@ if (environment.production) {
   enableProdMode();
 }
 
+/// cahmando o appmodule dentro da pasta app
 platformBrowserDynamic().bootstrapModule(AppModule)
   .catch(err => console.error(err));
