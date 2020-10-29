@@ -9,6 +9,8 @@ import { AppComponent } from './app.component';
 import { CourseModule } from './courses/course.module';
 import { CoreModule } from './core/core.module';
 import { Error404Compoennt } from './core/component/error-404/error-404.component';
+import { CourseListComponent } from './courses/course-list.component';
+import { CourseInfoComponent } from './courses/course-info.component';
 
 @NgModule({
   declarations: [
@@ -22,8 +24,15 @@ import { Error404Compoennt } from './core/component/error-404/error-404.componen
     FormsModule,
     RouterModule.forRoot([
       {
-        path: '', redirectTo: 'courses', pathMatch: 'full'
-      }, {
+        path: 'courses', component: CourseListComponent
+      },
+      {
+        path: 'courses/info/:id', component: CourseInfoComponent
+      },
+      {
+        path: '', redirectTo:'courses' , pathMatch:'full'
+      },
+       {
         path: '**', component: Error404Compoennt
       }
     ]),

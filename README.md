@@ -1,4 +1,11 @@
 # Introdução ao Angular 8 
+Vamos gerar um aplicação angular que consulta um bd em express
+
+começando : 
+npm i exprees
+npm i cors
+cd G:\DIO\introangular8\course-manager\src\assets\server
+node./serve.js
 
 ## Primeira app em Angular 
 - Angular usa TS 
@@ -167,6 +174,361 @@ export class Course {
   <tr *ngFor="let course of filteredCourses">
 
 ### criando componentes com atributos interdependentes 
+
+para pegar uma informação temos que colocar o atributo entre colchetes 
+  <td><img [src]="course.imageUrl" width="40" height="40" ></td>
+
+- criamos a pasta component\star 
+
+- criamos course-manager\src\app\shared\component\star\star.component.ts
+
+@Component({
+    selector: 'app-star',
+    templateUrl: './star.component.html',
+    styleUrls: ['./star.component.css']
+})
+
+
+- vamos usar onchange pois não sabemos se no momento da inicialização a informação estará disponível ( assíncrona )
+
+export class StarComponent implements OnChanges 
+
+ngOnChanges(): void { 
+        this.starWidth = this.rating * 74 / 5;
+    }
+
+- Recebendo informação de um componente externo : 
+
+@Input()
+rating: number = 0;
+
+
+com essa notação a variável rating pode receber uma informação extenra 
+
+- vamos instalar o font awsome 
+
+npm install font-awesome
+
+- importanto pra toda aplicação : no styles. css 
+@import '~font-awesome/css/font-awesome.min.css';
+
+
+  <span class="fa fa-star"></span>
+
+fa = fonte awesome
+
+/// vamos escondendo as estrelas conforme o valor 
+
+- precisamos declara-lo no app modeule 
+
+import { StarModule } from '../shared/component/star/star.module';
+
+
+- criamos uma css pro componente start 
+
+.crop { 
+    overflow: hidden;
+}
+
+- escontemos parte da div 
+
+## Lidando com vários componentes 
+
+### Injeção de dependência 
+
+- vamos criar a classe de serviço course.service.ts para fazer requisições http
+
+- Tornando elegível para ser uma injeção de dependência carregado na root da aplicação (podemos atrelar ao módulo do serviço tb )
+
+
+import { Injectable } from '@angular/core';
+
+@Injectable({
+    providedIn: 'root'
+})
+
+- criamos uma classe com métodos  
+
+export class CourseService { 
+
+- nos métodos é interessante usar variáveis cujos valores não serão alterados 
+
+- estamos criando os filtros course-manager\src\app\courses\course-list.component.ts
+
+  set filter(value: string) { 
+        this._filterBy = value;
+
+        this.filteredCourses = this._courses.filter((course: Course) => course.name.toLocaleLowerCase().indexOf(this._filterBy.toLocaleLowerCase()) > -1);
+    }
+
+    get filter() { 
+        return this._filterBy;
+    }
+
+### transformando datas com pipes 
+
+Nos pipes alteramos a formatação como o componente é mostrado no nosso template: 
+
+course-manager\src\app\courses\course-list.component.html
+          /// lowercase é um pipe nativo do angular 
+           <td>{{ course.code | lowercase | replace: '-': ' ' }}</td>
+           <td>{{ course.releaseDate | date: 'dd/MM/yyyy' }}</td>
+
+- criamos course-manager\src\app\shared\pipe\replace.pipe.ts
+- criamos o decorator para torna-lo elegivel como pipe 
+
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+    name: 'replace'
+})
+export class ReplacePipe implements PipeTransform {
+    
+    transform(value: string, char: string, valueToReplace: string) { 
+        return value.replace(char, valueToReplace);
+    }
+
+}
+
+- no course module   course-manager\src\app\courses\course.module.ts
+imports: [
+     AppPipeModule,
+
+- agora podemos usar o pipe lá em cima no courselist
+
+### Protegendo rotas com o guard 
+
+criamos o nav bar 
+
+course-manager\src\app\core\component\nav-bar\nav-bar.component.ts
+
+import { Component } from '@angular/core';
+
+@Component({
+    selector: 'app-nav-bar',
+    templateUrl: './nav-bar.component.html'
+})
+export class NavBarComponent { 
+
+}
+
+- declacarmos no app component html 
+
+
+ <app-nav-bar></app-nav-bar>
+<div class="container"> 
+     <router-outlet></router-outlet>
+</div>
+
+- declamramos no app module 
+
+import { NgModule } from '@angular/core';
+import { NavBarComponent } from './component/nav-bar/nav-bar.component';
+import { RouterModule } from '@angular/router';
+
+@NgModule({
+    declarations: [
+        NavBarComponent
+    ],
+    imports: [
+        RouterModule
+    ],
+    exports: [
+        NavBarComponent
+    ]
+})
+export class CoreModule { 
+
+}
+
+
+- as rotas são carregadas na root  course-manager\src\app\app.module.ts
+
+RouterModule.forRoot([
+      {
+        path: '', redirectTo: 'courses', pathMatch: 'full'
+      }, {
+        path: '**', component: Error404Compoennt
+      }
+    ]),
+    CourseModule,
+    CoreModule
+  ],
+
+
+-
+  {
+        path: 'courses', component: CourseListComponent
+      },
+
+
+- criando um switch (troca de componentes)
+(agora deixamos de trabalhar com selectors e trabalhamos com rotas, lembrando que selector é para ser utilizado em outro component, o course nao está sendo usado ele é a rota agora )
+
+<app-nav-bar></app-nav-bar>
+<div class="container mt-4">
+    <router-outlet></router-outlet>
+</div> 
+
+- acertando quando nao encontrar a rota 
+
+{
+        path: '**', component: Error404Compoennt
+      }
+
+- criamos o error404
+
+course-manager\src\app\core\component\error-404\error-404.component.ts
+
+- nao esqueca de definir o appmodue 
+import { Error404Compoennt } from './core/component/error-404/error-404.component';
+
+declarations: [
+//    CourseListComponent,
+    AppComponent,
+    Error404Compoennt
+  ],
+
+
+- lembrando ! se estamos trabalhando com rotas nao faz sentido ter selector no compoennte ! 
+
+- precisando colocar o router na pagina principal ! 
+
+## Ativando rotas para acessar componentes 
+
+- inserindo um link na tabela 
+
+            <td>
+                <a [routerLink]="['/courses/info', course.id]" class="btn btn-primary mr-2">Edit</a>
+                <button (click)="deleteById(course.id)" class="btn btn-danger">Delete</button>
+            </td>
+- entra na rota courses/info e um atributo de url 
+
+- criamos o course-manager\src\app\courses\course-info.component.ts
+
+- será exibido via rota ! não precisa de selector 
+
+@Component({
+    templateUrl: './course-info.component.html'
+})
+inserimos mais uma rota que recebe um parametro id 
+
+      {
+        path: 'courses/info/:id', component:CourseInfoComponent
+      },
+    
+mudamos o app.module.ts 
+
+```Js
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import {FormsModule} from '@angular/forms'
+import { HttpClientModule } from '@angular/common/http';
+//import { CourseListComponent } from './courses/course-list.component';
+
+import { AppComponent } from './app.component';
+import { CourseModule } from './courses/course.module';
+import { CoreModule } from './core/core.module';
+import { Error404Compoennt } from './core/component/error-404/error-404.component';
+import { CourseListComponent } from './courses/course-list.component';
+import { CourseInfoComponent } from './courses/course-info.component';
+
+@NgModule({
+  declarations: [
+//    CourseListComponent,
+    AppComponent,
+    Error404Compoennt
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    FormsModule,
+    RouterModule.forRoot([
+      {
+        path: 'courses', component: CourseListComponent
+      },
+      {
+        path: 'courses/info/:id', component: CourseInfoComponent
+      },
+      {
+        path: '', redirectTo:'courses' , pathMatch:'full'
+      },
+       {
+        path: '**', component: Error404Compoennt
+      }
+    ]),
+    CourseModule,
+    CoreModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+```
+
+pegando as informações da rota e fazendo um get 
+course-manager\src\app\courses\course-info.component.ts
+
+```
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Course } from './course';
+import { CourseService } from './course.service';
+
+@Component({
+    templateUrl: './course-info.component.html'
+})
+export class CourseInfoComponent implements OnInit {
+
+    course: Course;
+
+    constructor(private activatedRoute: ActivatedRoute, private courseService: CourseService) { }
+    
+    ngOnInit(): void { 
+        this.courseService.retrieveById(+this.activatedRoute.snapshot.paramMap.get('id')).subscribe({
+            next: course => this.course = course,
+            error: err => console.log('Error', err)
+        });
+    }
+
+    save(): void {
+        this.courseService.save(this.course).subscribe({
+            next: course => console.log('Saved with success', course),
+            error: err => console.log('Error', err)
+        });
+    }
+
+}
+```
+pega as informaçoes da rota ativa 
+
+ constructor(private activatedRoute: ActivatedRoute, private courseService: CourseService) { }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Course Manager

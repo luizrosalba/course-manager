@@ -3,7 +3,6 @@ import { Course } from './course';
 import { CourseService } from './course.service';
 
 @Component({
-    selector:'app-course-list',
     templateUrl: './course-list.component.html'
 })
 export class CourseListComponent implements OnInit { 
@@ -15,6 +14,8 @@ export class CourseListComponent implements OnInit {
     _filterBy: string;
 
     constructor(private courseService: CourseService) { }
+    /// o angular vai pegar o objeto elegível a injeção 
+    /// e vai instanciar esse objeto 
 
     ngOnInit(): void { 
         this.retrieveAll();
