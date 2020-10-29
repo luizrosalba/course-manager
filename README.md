@@ -6,8 +6,26 @@ npm i exprees
 npm i cors
 cd G:\DIO\introangular8\course-manager\src\assets\server
 node./serve.js
+Obs : 
+
+é muito melhor trabalhar com um objeto assim bonito dai podemos usar-lo como 
+classe !! 
+
+export class Course { 
+    id: number;
+    name: string;
+    imageUrl: string;
+    price: number;
+    code: string;
+    duration: number;
+    rating: number;
+    releaseDate: string;
+    description: string;
+}
+
 
 ## Primeira app em Angular 
+- angular dá bastante erro de cache, é so restartar a aplicação e ele para 
 - Angular usa TS 
 - npm install -g @angular/cli
 - ng version 
@@ -267,7 +285,8 @@ export class CourseService {
 
 ### transformando datas com pipes 
 
-Nos pipes alteramos a formatação como o componente é mostrado no nosso template: 
+Nos pipes alteramos a formatação como o componente é mostrado no nosso template: por exemplo 
+formatar a data ou trocar uma pontuacao 
 
 course-manager\src\app\courses\course-list.component.html
           /// lowercase é um pipe nativo do angular 
@@ -299,6 +318,7 @@ imports: [
 ### Protegendo rotas com o guard 
 
 criamos o nav bar 
+OBS: ele moveu depois para pasta core o navbar e o erro 404 
 
 course-manager\src\app\core\component\nav-bar\nav-bar.component.ts
 
@@ -344,26 +364,61 @@ export class CoreModule {
 
 - as rotas são carregadas na root  course-manager\src\app\app.module.ts
 
-RouterModule.forRoot([
+
+```JS
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import {FormsModule} from '@angular/forms'
+import { HttpClientModule } from '@angular/common/http';
+//import { CourseListComponent } from './courses/course-list.component';
+
+import { AppComponent } from './app.component';
+import { CourseModule } from './courses/course.module';
+import { CoreModule } from './core/core.module';
+import { Error404Compoennt } from './core/component/error-404/error-404.component';
+import { CourseListComponent } from './courses/course-list.component';
+import { CourseInfoComponent } from './courses/course-info.component';
+
+@NgModule({
+  declarations: [
+//    CourseListComponent,
+    AppComponent,
+    Error404Compoennt
+  ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    FormsModule,
+    RouterModule.forRoot([
       {
-        path: '', redirectTo: 'courses', pathMatch: 'full'
-      }, {
+        path: 'courses', component: CourseListComponent
+      },
+      {
+        path: 'courses/info/:id', component: CourseInfoComponent
+      },
+      {
+        path: '', redirectTo:'courses' , pathMatch:'full'
+      },
+       {
         path: '**', component: Error404Compoennt
       }
     ]),
     CourseModule,
     CoreModule
   ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
 
-
--
-  {
-        path: 'courses', component: CourseListComponent
-      },
+```
 
 
 - criando um switch (troca de componentes)
 (agora deixamos de trabalhar com selectors e trabalhamos com rotas, lembrando que selector é para ser utilizado em outro component, o course nao está sendo usado ele é a rota agora )
+
+course-manager\src\app\app.component.html
 
 <app-nav-bar></app-nav-bar>
 <div class="container mt-4">
@@ -380,7 +435,7 @@ RouterModule.forRoot([
 
 course-manager\src\app\core\component\error-404\error-404.component.ts
 
-- nao esqueca de definir o appmodue 
+- nao esqueca de definir o appmodule 
 import { Error404Compoennt } from './core/component/error-404/error-404.component';
 
 declarations: [
@@ -396,17 +451,18 @@ declarations: [
 
 ## Ativando rotas para acessar componentes 
 
-- inserindo um link na tabela 
+- inserindo um botao editar na tabela 
 
             <td>
                 <a [routerLink]="['/courses/info', course.id]" class="btn btn-primary mr-2">Edit</a>
                 <button (click)="deleteById(course.id)" class="btn btn-danger">Delete</button>
             </td>
+
 - entra na rota courses/info e um atributo de url 
 
 - criamos o course-manager\src\app\courses\course-info.component.ts
 
-- será exibido via rota ! não precisa de selector 
+- será exibido via rota ! não precisa de selector em componente que está roteado
 
 @Component({
     templateUrl: './course-info.component.html'
@@ -471,7 +527,7 @@ export class AppModule { }
 pegando as informações da rota e fazendo um get 
 course-manager\src\app\courses\course-info.component.ts
 
-```
+```Js
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from './course';
@@ -506,21 +562,233 @@ pega as informaçoes da rota ativa
 
  constructor(private activatedRoute: ActivatedRoute, private courseService: CourseService) { }
 
+atenção 
+activatedRoute pega as informações neste momento da rota ativa! 
+params pega o parametro que eu defini na minha rota 
+
+ this.courseService.retrieveById(+this.activatedRoute.snapshot.paramMap.get('id')).subscribe({
+            next: course => this.course = course,
+            error: err => console.log('Error', err)
+        });
+
+atenção para coloar uma classe no link deixando o menu mais dinamico 
+
+ <a [routerLink]="['/courses']" routerLinkActive="active" class="nav-link">Courses</a>
+
+### Formulários e templates 
+
+vamos criar um metodo no course service para filtrar o curso e trazer ele para que possamos usalo no formulario 
+
+ retrieveById(id: number): Observable<Course> { 
+        return this.httpClient.get<Course>(`${this.coursesUrl}/${id}`);
+    }
+
+
+agora atualizamos nosso courseinfo component para receber a informação da rota atual ao carregar 
+
+```Js
+
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Course } from './course';
+import { CourseService } from './course.service';
+
+@Component({
+    /// não faz sentido ter selector se este
+    /// componente está sendo roteado ! 
+    templateUrl: './course-info.component.html'
+})
+export class CourseInfoComponent implements OnInit {
+
+    course: Course;
+
+    constructor(private activatedRoute: ActivatedRoute, private courseService: CourseService) { }
     
+    ngOnInit(): void { 
+        this.courseService.retrieveById
+        (+this.activatedRoute.snapshot.paramMap.get('id'))
+        .subscribe({
+            next: course => this.course = course,
+            error: err => console.log('Error', err)
+        });
+    }
+
+    save(): void {
+        this.courseService.save(this.course).subscribe({
+            next: course => console.log('Saved with success', course),
+            error: err => console.log('Error', err)
+        });
+    }
+
+}
+```
+
+
+Atenção ! 
+# cria uma variável de template  criamos o courseForm 
+
+
+<form #courseForm="ngForm" *ngIf="course">
+
+Atenção ! 
+
+aqui estamos fazendo TWDB no nome do curso declarado lá no courseinfocomponent. Vamos passar os atributos do ngmodel para variavel courseName. Podemos fazer verificações na courseName com por exemplo verificar se é valida . required , name passa a ser obrigatório e se nada ofr escrito a variavel courseName se torna inválida 
+
+ngClass passa uma classe dinâmica para esta propriedade 
+adicionamos a classe is-invalid 
+e uma condição após os : 
+Quando a condição for verdadeira adicionara esta classe . quando apagarmos todo o input o bootstrap fará o input ficar vermelho mostrando que é campo requerido 
+
+   <input [(ngModel)]="course.name" required name="name" #courseName="ngModel" [ngClass]="{'is-invalid': courseName.invalid}" class="form-control">
+            
+          
+          <div class="invalid-feedback">
+                <span>Course name is required</span>
+            </div>
 
 
 
+atenção 
+so habilite se o formulario for valido 
+Existem outras propriedades interessantes de template, preciso estudar sobre isso 
+<button [disabled]="courseForm.invalid" (click)="save()" class="btn btn-primary mr-2">Save</button>
+    <button [routerLink]="['/courses']" class="btn btn-secondary">Back</button>
+
+
+### Segregando responsabilidades 
+
+O retorno de um http é por padrão um Observable !! 
+um observable eh um contrato. PRecisamos dar um subscibe para que ele possa ser executado 
+
+
+Obs : 
+As informações vem por requisição HTTP que são por natureza assíncronas. O ngif do formulario serve para somente executar o formulario quando as informações estiverem disponíveis. 
+Isto poderia ser feito também se instanciassemos a variaável couse da classe com um new 
 
 
 
+<form #courseForm="ngForm" *ngIf="course">
 
 
+### Trabalhando com delete 
+
+Ok ! já conhecia tudo 
 
 
+  deleteById(courseId: number): void { 
+        this.courseService.deleteById(courseId).subscribe({
+            next: () => { 
+                console.log('Deleted with success');
+                this.retrieveAll();
+            },
+            error: err => console.log('Error', err)
+        })
+    }
 
 
+deleteById(id: number): Observable<any> {
+        return this.httpClient.delete<any>(`${this.coursesUrl}/${id}`);
+    }
+
+### Segregando em modulos 
+
+Ao criar um module.ts em cada componente, segregamos as responsabilidades 
+a aplciação é como se fosse uma casa separada em modulos 
+modulo é uma limitação de contexto 
+
+course module.ts 
+
+o angular não permite que o mesmo componente seja declarado duas vezes em módulos diferentes então precisamos tirar a declaracao      CourseListComponent,    CourseInfoComponent do app principal 
+
+        
+Agora estamos resolvendo imports e declarations em dois lugares diferentes 
+o component precisa conehcer os modulos basicos do angular 
+ CommonModule, recursos basicos do angular deve ser importado no modulo fique de olho no erro para saber se está faltando importar ele 
+ o ngmodel, o starmodule o app pipe ... 
+
+```js 
+import { NgModule } from '@angular/core';
+import { CourseListComponent } from './course-list.component';
+import { CourseInfoComponent } from './course-info.component';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { StarModule } from '../shared/component/star/star.module';
+import { AppPipeModule } from '../shared/pipe/app-pipe.module';
 
 
+@NgModule({
+    declarations: [
+      /// modulos que o seu modulo precisa para existir 
+        CourseListComponent,
+        CourseInfoComponent
+    ], 
+    imports: [
+      /// rotas que seu modulto tem 
+      /// vamos trazaer do appmodulo para cá ! 
+        CommonModule,
+        FormsModule, /// para usar o ngmodel
+        StarModule,
+        AppPipeModule,
+        RouterModule.forChild([
+            {
+                path: 'courses', component: CourseListComponent
+            },
+            {
+                path: 'courses/info/:id', component: CourseInfoComponent
+            }
+        ])
+    ]
+})
+export class CourseModule { 
+
+}
+```
+
+
+### shared ( shared modules )
+
+Na pasta shared , temos componentes, pipes , validações pequenas que podem ser importados conforme necessidade 
+
+vamos criar um modulo para cada componente pois se criassemos um so modulo para todos ficaria muito pesado importa-lo quando fossemos usa-lo 
+
+export serve para dizer que podemos exportar para ser usado em outro modulo 
+
+
+Modulo do component star 
+```Js
+import { NgModule } from '@angular/core';
+import { StarComponent } from './star.component';
+
+@NgModule({
+    declarations: [
+        StarComponent
+    ],
+    exports: [
+        StarComponent
+    ]
+})
+export class StarModule {
+
+}
+```
+
+fizemos o mesmo para o pipe 
+é interessante ter um modulo para todos os pipes, se a aplicação ficar com muito é bom 
+separar um modulo para cada contexto 
+ex: 
+pipe financas 
+pipe educação 
+pipe formatação ... 
+
+## conhecendo a  pasta  core 
+
+a pasta core contem componentes que não são tão genéricos quanto  os da pasta shared, por exemplo nosso header e nosso componente de erro , elas tem alguma relação com outros ocmponentens da nossa aplicação 
+
+### Erros 
+
+como o componente erro vai aparecer em toda aplicação , faz sentido coloca-lo na pasta core 
+nao precisamos declarar o modulo de erro pois já está sendo decladrado no modulo pai 
 
 
 

@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-    name: 'replace'
+    name: 'replace' /// esse nome tem que ser o mesmo do pipe
+    /// utilizado 
 })
 export class ReplacePipe implements PipeTransform {
     

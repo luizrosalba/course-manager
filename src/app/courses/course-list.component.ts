@@ -9,7 +9,9 @@ export class CourseListComponent implements OnInit {
 
     filteredCourses: Course[] = [];
 
-    _courses: Course[] = [];
+    _courses: Course[] = []; 
+    /// o _ indica para o programador que está lendo o codigo
+    /// que a variável ficara somente dentro dessa classe 
     
     _filterBy: string;
 
@@ -25,9 +27,11 @@ export class CourseListComponent implements OnInit {
         this.courseService.retrieveAll().subscribe({
             next: courses => {
                 this._courses = courses;
-                this.filteredCourses = this._courses;
+                this.filteredCourses = this._courses; 
+                /// colocamos entro para ter certeza que já foi 
+                /// deu o retorno 
             },
-            error: err => console.log('Error', err) 
+            error: err => console.log('Error', err) /// callback recebe o retorno e exibe 
         })
     }
 
@@ -41,6 +45,7 @@ export class CourseListComponent implements OnInit {
         })
     }
 
+    /// filtrando os cursos 
     set filter(value: string) { 
         this._filterBy = value;
 
